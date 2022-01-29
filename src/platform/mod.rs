@@ -453,6 +453,7 @@ mod platform_impl {
         SupportedInputConfigs as AlsaSupportedInputConfigs,
         SupportedOutputConfigs as AlsaSupportedOutputConfigs,
     };
+
     #[cfg(feature = "jack")]
     pub use crate::host::jack::{
         Device as JackDevice, Devices as JackDevices, Host as JackHost, Stream as JackStream,
@@ -460,8 +461,21 @@ mod platform_impl {
         SupportedOutputConfigs as JackSupportedOutputConfigs,
     };
 
-    #[cfg(feature = "jack")]
+    #[cfg(feature = "pulseaudio")]
+    pub use crate::host::pulseaudio::{
+        Device as PADevice, Devices as PADevices, Host as PAHost, Stream as PAStream,
+        SupportedInputConfigs as PASupportedInputConfigs,
+        SupportedOutputConfigs as PASupportedOutputConfigs,
+    };
+
+    #[cfg(all(feature = "jack", not(feature = "pulseaudio")))]
     impl_platform_host!(Jack jack "JACK", Alsa alsa "ALSA");
+
+    #[cfg(all(feature = "pulseaudio", not(feature = "jack")))]
+    impl_platform_host!(Alsa alsa "ALSA", PulseAudio pulseaudio "PulseAudio");
+
+    #[cfg(all(feature = "pulseaudio", feature = "jack"))]
+    impl_platform_host!(Jack jack "JACK", Alsa alsa "ALSA", PulseAudio pulseaudio "PulseAudio");
 
     #[cfg(not(feature = "jack"))]
     impl_platform_host!(Alsa alsa "ALSA");

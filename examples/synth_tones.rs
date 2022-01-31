@@ -10,8 +10,10 @@ use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 
 fn main() -> anyhow::Result<()> {
     let stream = stream_setup_for(sample_next)?;
-    stream.play()?;
+    stream.pause()?;
+    // stream.play()?;
     std::thread::sleep(std::time::Duration::from_millis(3000));
+    panic!();
     Ok(())
 }
 

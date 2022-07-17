@@ -6,6 +6,7 @@ use self::js_sys::eval;
 use self::wasm_bindgen::prelude::*;
 use self::wasm_bindgen::JsCast;
 use self::web_sys::{AudioContext, AudioContextOptions};
+use crate::traits::{DeviceTrait, HostTrait, StreamTrait};
 use crate::{
     BackendSpecificError, BufferSize, BuildStreamError, Data, DefaultStreamConfigError,
     DeviceNameError, DevicesError, InputCallbackInfo, OutputCallbackInfo, PauseStreamError,
@@ -14,7 +15,6 @@ use crate::{
 };
 use std::ops::DerefMut;
 use std::sync::{Arc, Mutex, RwLock};
-use traits::{DeviceTrait, HostTrait, StreamTrait};
 
 /// Content is false if the iterator is empty.
 pub struct Devices(bool);
@@ -347,6 +347,14 @@ impl DeviceTrait for Device {
             config: config.clone(),
             buffer_size_frames,
         })
+    }
+}
+
+impl Stream {
+    /// Return the [`AudioContext`](https://developer.mozilla.org/docs/Web/API/AudioContext) used
+    /// by this stream.
+    pub fn audio_context(&self) -> &AudioContext {
+        &*self.ctx
     }
 }
 

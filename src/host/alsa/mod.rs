@@ -4,6 +4,7 @@ extern crate parking_lot;
 
 use self::alsa::poll::Descriptors;
 use self::parking_lot::Mutex;
+use crate::traits::{DeviceTrait, HostTrait, StreamTrait};
 use crate::{
     BackendSpecificError, BufferSize, BuildStreamError, ChannelCount, Data,
     DefaultStreamConfigError, DeviceNameError, DevicesError, InputCallbackInfo, OutputCallbackInfo,
@@ -16,7 +17,6 @@ use std::convert::TryInto;
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 use std::vec::IntoIter as VecIntoIter;
-use traits::{DeviceTrait, HostTrait, StreamTrait};
 
 pub use self::enumerate::{default_input_device, default_output_device, Devices};
 
@@ -311,7 +311,7 @@ impl Device {
 
         let hw_params = alsa::pcm::HwParams::any(handle)?;
 
-        // TODO: check endianess
+        // TODO: check endianness
         const FORMATS: [(SampleFormat, alsa::pcm::Format); 3] = [
             //SND_PCM_FORMAT_S8,
             //SND_PCM_FORMAT_U8,
@@ -1023,7 +1023,13 @@ fn set_sw_params_from_format(
     sw_params.set_tstamp_mode(true)?;
     sw_params.set_tstamp_type(alsa::pcm::TstampType::MonotonicRaw)?;
 
-    pcm_handle.sw_params(&sw_params)?;
+    // tstamp_type param cannot be changed after the device is opened.
+    // The default tstamp_type value on most Linux systems is "monotonic",
+    // let's try to use it if setting the tstamp_type fails.
+    if pcm_handle.sw_params(&sw_params).is_err() {
+        sw_params.set_tstamp_type(alsa::pcm::TstampType::Monotonic)?;
+        pcm_handle.sw_params(&sw_params)?;
+    }
 
     Ok(period_len)
 }
